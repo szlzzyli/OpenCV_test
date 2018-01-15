@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <iostream>
-//#include <windows.h>
+#include <windows.h>
 #include <string>
 #include <time.h>
 #include <math.h>
@@ -33,34 +33,34 @@ String cascade_right_eye_path = "D:/develop_tools/opencv/sources/data/haarcascad
 String cascade_smile_path = "D:/develop_tools/opencv/sources/data/haarcascades/haarcascade_smile.xml";
 String cascade_glasses_path = "D:/develop_tools/opencv/sources/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
 
-//DWORD WINAPI showImageThread(CvCapture* p)
-//{
-//	while (1)
-//	{
-//		IplImage* frame = cvQueryFrame(p);
-//		cvShowImage("人脸捕捉2", frame);
-//	}	
-//	return 0;
-//}
+DWORD WINAPI showImageThread(CvCapture* p)
+{
+	while (1)
+	{
+		IplImage* frame = cvQueryFrame(p);
+		cvShowImage("人脸捕捉2", frame);
+	}	
+	return 0;
+}
 
 //程序入口
 int main()
 {
 
-	//double std2[1000] = { 0 };										//存放清晰度值
-	//int *j = 0;														//img数组下标
-	//IplImage* img[1000] = { NULL };									//存放符合要求人脸的数组，用于查找最清晰人像
+	double std2[1000] = { 0 };										//存放清晰度值
+	int *j = 0;														//img数组下标
+	IplImage* img[1000] = { NULL };									//存放符合要求人脸的数组，用于查找最清晰人像
 	IplImage* final = NULL;												//存放最清晰图像
 	double* max_stand = (double*)malloc(sizeof(double));				//存放最清晰图像的方差
 
-		/*VideoCapture capture(0);
+	/*VideoCapture capture(0);
 	Mat *frame = NULL;*/
 
-	//cvNamedWindow("人脸捕捉", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("人脸捕捉", CV_WINDOW_AUTOSIZE);
 	CvCapture* capture = cvCreateCameraCapture(0);
-	//CvCapture* capture2 = cvCreateCameraCapture(0);
+	CvCapture* capture2 = cvCreateCameraCapture(0);
 	IplImage* frame = NULL;
-	//HANDLE showImage = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)showImageThread, capture2, 0, NULL);
+	HANDLE showImage = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)showImageThread, capture2, 0, NULL);
 
 	int num = 0;														//帧计数
 	CascadeClassifier cascade_face, cascade_left_eye, cascade_right_eye, cascade_smile, cascade_glasses;
@@ -86,62 +86,58 @@ int main()
 		if (cvWaitKey(40) == 27)										//cvWaitKey的参数相当于多少ms一帧，现在是40ms一帧，1s25帧
 			break;														//按ESC就退出
 
-		//当前帧存储路径设定
-		char path[30];
-		time_t now;
-		time(&now);
-		sprintf_s(path, "%s%lld%s%d%s", "image", now, "-", ++num, ".jpg");
-		
-		//判断是否包含人脸,image保存返回后的剪裁好的人脸
-		IplImage *image = NULL;
-		if(!detectface(frame_Mat, &image, &final, cascade_face, 1, max_stand ))
-		{
-			printf("未检测到人脸！\n");
-			continue;
-		}
+		////当前帧存储路径设定
+		//char path[30];
+		//time_t now;
+		//time(&now);
+		//sprintf_s(path, "%s%lld%s%d%s", "image", now, "-", ++num, ".jpg");
+		//
+		////判断是否包含人脸,image保存返回后的剪裁好的人脸
+		//IplImage *image = NULL;
+		//if(!detectface(frame_Mat, &image, &final, cascade_face, 1, max_stand ))
+		//{
+		//	printf("未检测到人脸！\n");
+		//	continue;
+		//}
 
-		//判断双眼瞳孔间距，若通孔间距过小，则判定不是正脸
-		Mat eye_Mat = cvarrToMat(image);
-		float eye_distance = 0;
-		computeEyeDistance(eye_Mat, cascade_glasses, &eye_distance);
-		printf("帧 %d 的瞳孔间距为： %f \n", num, eye_distance);
-		if (eye_distance < 70 || eye_distance > 115)						//判断瞳孔间距是否符合要求，即脸是否正脸
-		{
-			printf("瞳孔间距不符合，当前间距为： %f \n", eye_distance);
-			continue;
-		}
+		////判断双眼瞳孔间距，若通孔间距过小，则判定不是正脸
+		//Mat eye_Mat = cvarrToMat(image);
+		//float eye_distance = 0;
+		//computeEyeDistance(eye_Mat, cascade_glasses, &eye_distance);
+		//printf("帧 %d 的瞳孔间距为： %f \n", num, eye_distance);
+		//if (eye_distance < 70 || eye_distance > 115)						//判断瞳孔间距是否符合要求，即脸是否正脸
+		//{
+		//	printf("瞳孔间距不符合，当前间距为： %f \n", eye_distance);
+		//	continue;
+		//}
 
-						
-		if(!IsInclude(frame_Mat, cascade_smile, 1))							//判断是否包含鼻子
-		{
-			printf("缺少鼻子！\n");
-			continue;
-		}
-				
-		if (image != NULL)													//存储合适图像
-		{
-			printf("文件 %s 被存储\n", &path);
-			cvSaveImage(path, image, 0);
-		}
-		cvReleaseImage(&image);
+		//				
+		//if(!IsInclude(frame_Mat, cascade_smile, 1))							//判断是否包含鼻子
+		//{
+		//	printf("缺少鼻子！\n");
+		//	continue;
+		//}
+		//		
+		//if (image != NULL)													//存储合适图像
+		//{
+		//	printf("文件 %s 被存储\n", &path);
+		//	cvSaveImage(path, image, 0);
+		//}
+		//cvReleaseImage(&image);
 		
 	}
-	/*int i = findmax();
-	if (i == 0) {
-		printf("不存在合适图像！\n");
-		return 0;
-	}*/
-	if (*max_stand != 0)
-		cvSaveImage("final.jpg", final, 0);
-	else
-	{
-		printf("提取失败，没有高清晰度图片返回\n");
-		return -1;
-	}
+
+	//if (*max_stand != 0)
+	//	cvSaveImage("final.jpg", final, 0);
+	//else
+	//{
+	//	printf("提取失败，没有高清晰度图片返回\n");
+	//	return -1;
+	//}
 
 	//资源释放
 	cvReleaseCapture(&capture);
-	//cvDestroyWindow("人脸捕捉2");
+	cvDestroyWindow("人脸捕捉2");
 	cvDestroyWindow("人脸捕捉");
 	//cvReleaseImage(&frame);
 	//cvReleaseImage(&final);
