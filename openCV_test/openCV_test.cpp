@@ -86,10 +86,6 @@ int main()
 		if (cvWaitKey(40) == 27)										//cvWaitKey的参数相当于多少ms一帧，现在是40ms一帧，1s25帧
 			break;														//按ESC就退出
 
-		//capture >> *frame;
-		//imshow("capture", *frame);
-		//----------------------------------------------------------------
-
 		//当前帧存储路径设定
 		char path[30];
 		time_t now;
@@ -128,9 +124,6 @@ int main()
 			cvSaveImage(path, image, 0);
 		}
 		cvReleaseImage(&image);
-
-		//-----------------------------------------------------------------------
-
 		
 	}
 	/*int i = findmax();
