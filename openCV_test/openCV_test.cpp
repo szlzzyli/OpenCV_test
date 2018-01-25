@@ -8,13 +8,15 @@
 #include "opencv2/highgui/highgui.hpp"  
 #include "opencv2/imgproc/imgproc.hpp"  
 //#include "opencv.hpp"
-
 #include <stdio.h>
 #include <iostream>
-#include <windows.h>
 #include <string>
 #include <time.h>
 #include <math.h>
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1700)
+#include <thread>
+#endif
 
 using namespace std;
 using namespace cv;
@@ -26,6 +28,7 @@ bool IsInclude(Mat img, CascadeClassifier& cascade, double scale);								//检测
 bool computeImgBlur(Mat src, IplImage* *final, double* max_stand);								//计算图片模糊程度
 int findmax();																					//寻找符合要求的人像中清晰度最高的
 
+
 //所用到的级联分类器列表
 String cascade_face_path = "D:/develop_tools/opencv/sources/data/haarcascades/haarcascade_frontalface_alt.xml";
 String cascade_left_eye_path = "D:/develop_tools/opencv/sources/data/haarcascades/haarcascade_lefteye_2splits.xml";
@@ -33,20 +36,46 @@ String cascade_right_eye_path = "D:/develop_tools/opencv/sources/data/haarcascad
 String cascade_smile_path = "D:/develop_tools/opencv/sources/data/haarcascades/haarcascade_smile.xml";
 String cascade_glasses_path = "D:/develop_tools/opencv/sources/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
 
-DWORD WINAPI showImageThread(CvCapture* p)
+#define MAX_THREADS 10
+#define LOOP_NUM 10
+int64 work_begin[MAX_THREADS] = { 0 };
+int64 work_total[MAX_THREADS] = { 0 };
+
+static void workBegin(int i = 0)
 {
-	while (1)
-	{
-		IplImage* frame = cvQueryFrame(p);
-		cvShowImage("人脸捕捉2", frame);
-	}	
-	return 0;
+	work_begin[i] = getTickCount();
+}
+
+static void workEnd(int i = 0)
+{
+	work_total[i] += (getTickCount() - work_begin[i]);
+}
+
+static double getTotalTime(int i = 0)
+{
+	return work_total[i] / getTickFrequency() * 1000.;
+}
+
+//DWORD WINAPI showImageThread(CvCapture* p)
+//{
+//	while (1)
+//	{
+//		IplImage* frame = cvQueryFrame(p);
+//		cvShowImage("人脸捕捉2", frame);
+//	}	
+//	return 0;
+//}
+
+void showframe(IplImage* frame)
+{
+	//IplImage* frame = cvQueryFrame(capture);
+	cvShowImage("人脸捕捉", frame);
 }
 
 //程序入口
 int main()
 {
-
+	
 	double std2[1000] = { 0 };										//存放清晰度值
 	int *j = 0;														//img数组下标
 	IplImage* img[1000] = { NULL };									//存放符合要求人脸的数组，用于查找最清晰人像
@@ -60,7 +89,7 @@ int main()
 	CvCapture* capture = cvCreateCameraCapture(0);
 	CvCapture* capture2 = cvCreateCameraCapture(0);
 	IplImage* frame = NULL;
-	HANDLE showImage = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)showImageThread, capture2, 0, NULL);
+	//HANDLE showImage = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)showImageThread, capture2, 0, NULL);
 
 	int num = 0;														//帧计数
 	CascadeClassifier cascade_face, cascade_left_eye, cascade_right_eye, cascade_smile, cascade_glasses;
@@ -72,15 +101,24 @@ int main()
 		getchar();
 		return -1;
 	}
+		
+	std::vector<std::thread> th;
 
-	
 	while (1)															//遍历摄像头捕获的每一帧
 	{
 		//显示当前帧
-
 		frame = cvQueryFrame(capture);
+		IplImage* frame_for_show = cvCloneImage(frame);
+		
+		th.push_back(std::thread(showframe, frame_for_show));
+		th[0].detach();
+		
+		
+		
 		Mat frame_Mat = cvarrToMat(frame);
-		cvShowImage("人脸捕捉", frame);
+
+
+		//cvShowImage("人脸捕捉", frame);
 		//cvReleaseImage(&frame);
 		//按ESC退出遍历
 		if (cvWaitKey(40) == 27)										//cvWaitKey的参数相当于多少ms一帧，现在是40ms一帧，1s25帧
@@ -166,7 +204,7 @@ bool detectface(Mat img_Mat, IplImage* *out, IplImage* *final, CascadeClassifier
 	{
 		IplImage* src = cvCloneImage(&IplImage(img_Mat));
 		int r_x, r_y, r_width, r_height;
-		r_x = std::max(0, r->x - 12);
+		r_x = (std::max)(0, r->x - 12);
 		r_y = std::max(0, r->y - 20);
 		r_width = std::min(r->width + 24 + r_x, src->width);
 		r_height = std::min(r->height + 40 + r_y, src->height);
